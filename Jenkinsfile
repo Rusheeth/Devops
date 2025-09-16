@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = "rusheeth"  // DockerHub username
-        FRONTEND_IMAGE = "rusheeth/devops-frontend"
-        BACKEND_IMAGE  = "rusheeth/devops-backend"
+        DOCKER_REGISTRY = "docker.io"             // registry
+        FRONTEND_IMAGE  = "rusheeth/devops-frontend"
+        BACKEND_IMAGE   = "rusheeth/devops-backend"
     }
 
     stages {
@@ -18,7 +18,6 @@ pipeline {
             steps {
                 dir('backend') {
                     sh '''
-                        # Run inside Python container
                         docker run --rm -v $PWD:/app -w /app python:3.11 bash -c "
                             pip install --upgrade pip &&
                             pip install -r requirements.txt &&
@@ -35,7 +34,6 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh '''
-                        # Run inside Node container
                         docker run --rm -v $PWD:/app -w /app node:20 bash -c "
                             npm install &&
                             npm run build &&
@@ -48,7 +46,6 @@ pipeline {
             }
         }
 
-       stages {
         stage('Build Docker Images') {
             steps {
                 script {
@@ -70,7 +67,6 @@ pipeline {
             }
         }
     }
-    
 
     post {
         always {
@@ -86,8 +82,3 @@ pipeline {
         }
     }
 }
-
-
-
-
-
