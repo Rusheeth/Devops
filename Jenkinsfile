@@ -49,8 +49,8 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
-                    docker.build("${FRONTEND_IMAGE}:latest", "-f frontend.Dockerfile ./frontend")
-                    docker.build("${BACKEND_IMAGE}:latest", "-f backend.Dockerfile ./backend")
+                     sh "docker build -t ${FRONTEND_IMAGE}:latest -f frontend.Dockerfile ./frontend"
+                     sh "docker build -t ${BACKEND_IMAGE}:latest -f backend.Dockerfile ./backend"
                 }
             }
         }
@@ -82,3 +82,4 @@ pipeline {
         }
     }
 }
+
