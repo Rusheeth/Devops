@@ -51,8 +51,8 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 sh '''
-                    docker build -t $DOCKER_REGISTRY/$BACKEND_IMAGE:latest -f backend.Dockerfile backend
-                    docker build -t $DOCKER_REGISTRY/$FRONTEND_IMAGE:latest -f frontend.Dockerfile frontend
+                    docker.build("rusheeth/devops-frontend:latest", "-f frontend.Dockerfile ")
+                    docker.build("rusheeth/devops-backend:latest", "-f backend.Dockerfile ")
                 '''
             }
         }
@@ -84,3 +84,4 @@ pipeline {
         }
     }
 }
+
