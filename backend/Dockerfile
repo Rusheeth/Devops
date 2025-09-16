@@ -1,17 +1,13 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim
+FROM python:3.11-slim
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy only the requirements file first to leverage Docker layer caching
 COPY requirements.txt .
 
-# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Now copy the rest of the backend application code
-COPY . /app/
+COPY . .
 
-# Run app.py when the container launches
+EXPOSE 5000
+
 CMD ["python", "app.py"]
