@@ -2,10 +2,12 @@
   "name": "frontend",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview --port 5173"
+    "preview": "vite preview --port 5173",
+    "lint": "eslint . --ext .js,.jsx"
   },
   "dependencies": {
     "react": "18.2.0",
@@ -14,6 +16,9 @@
   },
   "devDependencies": {
     "vite": "5.0.0",
-    "@vitejs/plugin-react": "^4.2.1"
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.50.0",
+    "@babel/eslint-parser": "^7.22.5",
+    "eslint-plugin-react": "^7.34.0"
   }
 }
