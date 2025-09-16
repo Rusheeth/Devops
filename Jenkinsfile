@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         DOCKER_REGISTRY = "rusheeth"  // DockerHub username
-        BACKEND_IMAGE = "devops-backend"
-        FRONTEND_IMAGE = "devops-frontend"
+        FRONTEND_IMAGE = "rusheeth/devops-frontend"
+        BACKEND_IMAGE  = "rusheeth/devops-backend"
     }
 
     stages {
@@ -48,13 +48,13 @@ pipeline {
             }
         }
 
+       stages {
         stage('Build Docker Images') {
             steps {
-                sh '''
-                    docker.build("rusheeth/devops-frontend:latest", "-f frontend.Dockerfile frontend")
-                    docker.build("rusheeth/devops-backend:latest", "-f backend.Dockerfile backend")
-
-                '''
+                script {
+                    docker.build("${FRONTEND_IMAGE}:latest", "-f frontend.Dockerfile ./frontend")
+                    docker.build("${BACKEND_IMAGE}:latest", "-f backend.Dockerfile ./backend")
+                }
             }
         }
 
@@ -63,12 +63,13 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh '''
                         echo $PASS | docker login -u $USER --password-stdin
-                        docker push $DOCKER_REGISTRY/$BACKEND_IMAGE:latest
-                        docker push $DOCKER_REGISTRY/$FRONTEND_IMAGE:latest
+                        docker push $FRONTEND_IMAGE:latest
+                        docker push $BACKEND_IMAGE:latest
                     '''
                 }
             }
         }
+    }
     }
 
     post {
@@ -85,6 +86,7 @@ pipeline {
         }
     }
 }
+
 
 
 
