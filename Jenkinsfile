@@ -24,7 +24,7 @@ pipeline {
                         pip install -r requirements.txt
                         pip install pytest bandit
                         pytest --maxfail=1 --disable-warnings -q || true
-                        bandit -r . || true
+                        bandit -r . -c .bandit
                     '''
                 }
             }
@@ -80,4 +80,5 @@ pipeline {
         }
     }
 }
+
 
