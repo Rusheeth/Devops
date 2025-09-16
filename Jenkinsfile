@@ -2,13 +2,12 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = "rusheeth"
+        DOCKER_REGISTRY = "rusheeth"  // DockerHub username
         BACKEND_IMAGE = "devops-backend"
         FRONTEND_IMAGE = "devops-frontend"
     }
 
     stages {
-
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/Rusheeth/Devops.git'
@@ -18,19 +17,16 @@ pipeline {
         stage('Backend Setup & Tests') {
             steps {
                 dir('backend') {
-                    script {
-                        docker.image('python:3.11').inside {
-                            sh '''
-                                python -m venv venv
-                                . venv/bin/activate
-                                pip install --upgrade pip
-                                pip install -r requirements.txt
-                                pip install pytest bandit
-                                pytest --maxfail=1 --disable-warnings -q || true
-                                bandit -r . -c .bandit || true
-                            '''
-                        }
-                    }
+                    sh '''
+                        # Run inside Python container
+                        docker run --rm -v $PWD:/app -w /app python:3.11 bash -c "
+                            pip install --upgrade pip &&
+                            pip install -r requirements.txt &&
+                            pip install pytest bandit &&
+                            pytest --maxfail=1 --disable-warnings -q || true &&
+                            bandit -r . -c .bandit || true
+                        "
+                    '''
                 }
             }
         }
@@ -38,27 +34,26 @@ pipeline {
         stage('Frontend Setup & Tests') {
             steps {
                 dir('frontend') {
-                    script {
-                        docker.image('node:20').inside {
-                            sh '''
-                                npm install
-                                npm run build
-                                npm install --save-dev eslint jest
-                                npx eslint . || true
-                                npx jest --ci --runInBand || true
-                            '''
-                        }
-                    }
+                    sh '''
+                        # Run inside Node container
+                        docker run --rm -v $PWD:/app -w /app node:20 bash -c "
+                            npm install &&
+                            npm run build &&
+                            npm install --save-dev eslint jest &&
+                            npx eslint . || true &&
+                            npx jest --ci --runInBand || true
+                        "
+                    '''
                 }
             }
         }
 
         stage('Build Docker Images') {
             steps {
-                script {
-                    sh "docker build -t $DOCKER_REGISTRY/$BACKEND_IMAGE:latest -f backend.Dockerfile ./backend"
-                    sh "docker build -t $DOCKER_REGISTRY/$FRONTEND_IMAGE:latest -f frontend.Dockerfile ./frontend"
-                }
+                sh '''
+                    docker build -t $DOCKER_REGISTRY/$BACKEND_IMAGE:latest -f backend.Dockerfile backend
+                    docker build -t $DOCKER_REGISTRY/$FRONTEND_IMAGE:latest -f frontend.Dockerfile frontend
+                '''
             }
         }
 
@@ -73,7 +68,6 @@ pipeline {
                 }
             }
         }
-
     }
 
     post {
