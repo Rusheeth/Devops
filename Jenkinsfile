@@ -1,35 +1,44 @@
 pipeline {
-    agent any
+    agent none   // We'll use specific agents for each stage
 
     environment {
-        DOCKER_REGISTRY = "rusheeth"  // DockerHub username
+        DOCKER_REGISTRY = "rusheeth"
         BACKEND_IMAGE = "devops-backend"
         FRONTEND_IMAGE = "devops-frontend"
     }
 
     stages {
+
         stage('Checkout Code') {
+            agent any
             steps {
                 git branch: 'main', url: 'https://github.com/Rusheeth/Devops.git'
             }
         }
 
         stage('Backend Setup & Tests') {
-    steps {
-        dir('backend') {
-            sh '''
-                pip3 install --upgrade pip
-                pip3 install -r requirements.txt
-                pip3 install pytest bandit
-                pytest --maxfail=1 --disable-warnings -q || true
-                bandit -r . -c .bandit
-            '''
+            agent {
+                docker { image 'python:3.11' }  // Python agent
+            }
+            steps {
+                dir('backend') {
+                    sh '''
+                        python -m venv venv
+                        . venv/bin/activate
+                        pip install --upgrade pip
+                        pip install -r requirements.txt
+                        pip install pytest bandit
+                        pytest --maxfail=1 --disable-warnings -q || true
+                        bandit -r . -c .bandit || true
+                    '''
+                }
+            }
         }
-    }
-}
-
 
         stage('Frontend Setup & Tests') {
+            agent {
+                docker { image 'node:20' }  // Node agent
+            }
             steps {
                 dir('frontend') {
                     sh '''
@@ -44,16 +53,17 @@ pipeline {
         }
 
         stage('Build Docker Images') {
+            agent any
             steps {
                 script {
-                   sh "docker build -t $DOCKER_REGISTRY/$BACKEND_IMAGE:latest -f backend.Dockerfile ."
-                   sh "docker build -t $DOCKER_REGISTRY/$FRONTEND_IMAGE:latest -f frontend.Dockerfile ."
-
+                    sh "docker build -t $DOCKER_REGISTRY/$BACKEND_IMAGE:latest -f backend.Dockerfile ./backend"
+                    sh "docker build -t $DOCKER_REGISTRY/$FRONTEND_IMAGE:latest -f frontend.Dockerfile ./frontend"
                 }
             }
         }
 
         stage('Push Docker Images') {
+            agent any
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh '''
@@ -64,6 +74,7 @@ pipeline {
                 }
             }
         }
+
     }
 
     post {
@@ -80,8 +91,3 @@ pipeline {
         }
     }
 }
-
-
-
-
-
