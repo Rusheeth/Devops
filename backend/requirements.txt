@@ -6,3 +6,5 @@ psycopg2-binary==2.9.10
 python-dotenv==1.0.0
 pytest==7.4.2
 bandit==1.7.5
+pbr==6.0.0
+
