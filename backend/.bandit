@@ -1,11 +1,15 @@
-# Bandit configuration in YAML
+# backend/.bandit
+# Only scan your application package(s). Exclude virtualenvs, caches, and vendor/test dirs.
+targets:
+  - src
+  - app
 exclude:
   - venv
   - __pycache__
+  - node_modules
   - migrations
   - tests
-
 skips:
-  - B101
-  - B102
-
+  # optional: skip noisy low-severity checks you don't want to fail CI for
+  - B101   # assert used (commonly in test helpers)
+  - B102   # exec usage (test harnesses)
