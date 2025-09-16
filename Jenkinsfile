@@ -51,8 +51,9 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 sh '''
-                    docker.build("rusheeth/devops-frontend:latest", "-f frontend.Dockerfile ")
-                    docker.build("rusheeth/devops-backend:latest", "-f backend.Dockerfile ")
+                    docker.build("rusheeth/devops-frontend:latest", "-f frontend.Dockerfile frontend")
+                    docker.build("rusheeth/devops-backend:latest", "-f backend.Dockerfile backend")
+
                 '''
             }
         }
