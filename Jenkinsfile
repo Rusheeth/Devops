@@ -60,7 +60,7 @@ pipeline {
 
         stage('Push Docker Images') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'rusheeth-docker', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh '''
                         echo $PASS | docker login -u $USER --password-stdin
                         docker push $DOCKER_REGISTRY/$BACKEND_IMAGE:latest
@@ -85,4 +85,5 @@ pipeline {
         }
     }
 }
+
 
