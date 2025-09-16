@@ -1,17 +1,17 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim
-
-# Set the working directory in the container
+# backend.Dockerfile
 WORKDIR /app
 
-# Copy the requirements file from the backend folder into the workdir
-COPY backend/requirements.txt .
+# Copy requirements.txt
+COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the backend application code
-COPY backend/ /app/
+# Copy all backend files
+COPY . .
 
-# Run app.py when the container launches
+# Expose port (optional)
+EXPOSE 5000
+
+# Command to run
 CMD ["python", "app.py"]
