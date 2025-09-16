@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         DOCKER_REGISTRY = "rusheeth"  // DockerHub username
-        BACKEND_IMAGE = "simple-notes-app-backend"
-        FRONTEND_IMAGE = "simple-notes-app-frontend"
+        BACKEND_IMAGE = "devops-backend"
+        FRONTEND_IMAGE = "devops-frontend"
     }
 
     stages {
@@ -80,3 +80,4 @@ pipeline {
         }
     }
 }
+
