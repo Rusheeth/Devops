@@ -15,16 +15,19 @@ pipeline {
         }
 
         stage('Backend Setup & Tests') {
-            steps {
-                dir('backend') {
-                    sh '''
-                        . venv/bin/activate
-                         pip install pbr bandit
-                         bandit -r . -c .bandit || true
-                    '''
-                }
-            }
+    steps {
+        dir('backend') {
+            sh '''
+                pip3 install --upgrade pip
+                pip3 install -r requirements.txt
+                pip3 install pytest bandit
+                pytest --maxfail=1 --disable-warnings -q || true
+                bandit -r . -c .bandit
+            '''
         }
+    }
+}
+
 
         stage('Frontend Setup & Tests') {
             steps {
@@ -77,6 +80,7 @@ pipeline {
         }
     }
 }
+
 
 
 
