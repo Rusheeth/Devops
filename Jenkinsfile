@@ -47,8 +47,8 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
-                    sh "docker build -t $DOCKER_REGISTRY/$BACKEND_IMAGE:latest ./backend"
-                    sh "docker build -t $DOCKER_REGISTRY/$FRONTEND_IMAGE:latest ./frontend"
+                    sh "docker build -t rusheeth/simple-notes-app-backend:latest -f backend.Dockerfile ."
+                    sh "docker build -t rusheeth/simple-notes-app-frontend:latest -f frontend.Dockerfile ."
                 }
             }
         }
