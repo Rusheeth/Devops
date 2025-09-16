@@ -1,12 +1,19 @@
 // frontend/eslint.config.js
 import js from "@eslint/js";
+import react from "eslint-plugin-react";
 
 export default [
+  js.configs.recommended,
   {
     files: ["**/*.js", "**/*.jsx"],
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
+      parser: "@babel/eslint-parser",
+      parserOptions: {
+        requireConfigFile: false,
+        ecmaVersion: "latest",
+        sourceType: "module",
+        ecmaFeatures: { jsx: true }
+      },
       globals: {
         window: "readonly",
         document: "readonly",
@@ -18,10 +25,12 @@ export default [
         MutationObserver: "readonly"
       }
     },
+    plugins: {
+      react
+    },
     rules: {
       "no-unused-vars": "warn",
       "no-console": "off"
     }
-  },
-  js.configs.recommended
+  }
 ];
