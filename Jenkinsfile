@@ -72,6 +72,7 @@ pipeline {
         always {
             echo "Cleaning up workspace and Docker dangling images..."
             sh 'docker system prune -f || true'
+            sh 'chmod -R +w ${WORKSPACE} || true'
             deleteDir()
         }
         success {
@@ -82,5 +83,7 @@ pipeline {
         }
     }
 }
+
+
 
 
