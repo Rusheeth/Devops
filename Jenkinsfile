@@ -22,22 +22,25 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar-server') {   // 🔹 "sonar-server" = Jenkins SonarQube server config name
-                    sh '''
-                        # Backend analysis
-                        sonar-scanner \
-                          -Dsonar.projectKey=backend \
-                          -Dsonar.sources=backend \
-                          -Dsonar.host.url=$SONAR_HOST_URL \
-                          -Dsonar.login=$SONAR_AUTH_TOKEN || true
+                withSonarQubeEnv('sonar-server') {
+                    script {
+                        def scannerHome = tool 'sonar-scanner'  // 🔹 Global Tool name in Jenkins
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                              -Dsonar.projectKey=backend \
+                              -Dsonar.sources=backend \
+                              -Dsonar.host.url=$SONAR_HOST_URL \
+                              -Dsonar.login=$SONAR_AUTH_TOKEN
+                        """
 
-                        # Frontend analysis
-                        sonar-scanner \
-                          -Dsonar.projectKey=frontend \
-                          -Dsonar.sources=frontend \
-                          -Dsonar.host.url=$SONAR_HOST_URL \
-                          -Dsonar.login=$SONAR_AUTH_TOKEN || true
-                    '''
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                              -Dsonar.projectKey=frontend \
+                              -Dsonar.sources=frontend \
+                              -Dsonar.host.url=$SONAR_HOST_URL \
+                              -Dsonar.login=$SONAR_AUTH_TOKEN
+                        """
+                    }
                 }
             }
         }
