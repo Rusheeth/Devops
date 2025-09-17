@@ -2,14 +2,15 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = "docker.io"             // registry
+        DOCKER_REGISTRY = "docker.io"
         FRONTEND_IMAGE  = "rusheeth/devops-frontend"
         BACKEND_IMAGE   = "rusheeth/devops-backend"
     }
+
     stages {
-       stage('Clean Workspace') {
+        stage('Clean Workspace') {
             steps {
-                cleanWs()   // Jenkins Workspace Cleanup plugin
+                cleanWs()
             }
         }
 
@@ -23,12 +24,12 @@ pipeline {
             steps {
                 dir('backend') {
                     sh '''
-                        docker run --rm -v $PWD:/app -w /app python:3.11 bash -c "
+                        docker run --rm -v ${WORKSPACE}/backend:/app -w /app python:3.11 bash -c "
                             pip install --upgrade pip &&
                             pip install -r requirements.txt &&
                             pip install pytest bandit &&
-                            pytest --maxfail=1 --disable-warnings -q || true &&
-                            bandit -r . -c .bandit || true
+                            pytest --maxfail=1 --disable-warnings -q &&
+                            bandit -r . -c .bandit
                         "
                     '''
                 }
@@ -39,12 +40,12 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh '''
-                        docker run --rm -v $PWD:/app -w /app node:20 bash -c "
+                        docker run --rm -v ${WORKSPACE}/frontend:/app -w /app node:20 bash -c "
                             npm install &&
                             npm run build &&
                             npm install --save-dev eslint jest &&
-                            npx eslint . || true &&
-                            npx jest --ci --runInBand || true
+                            npx eslint . &&
+                            npx jest --ci --runInBand
                         "
                     '''
                 }
@@ -53,10 +54,8 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                script {
-                     sh "docker build -t ${FRONTEND_IMAGE}:latest ./frontend"
-                     sh "docker build -t ${BACKEND_IMAGE}:latest ./backend"
-                }
+                sh "docker build -t ${FRONTEND_IMAGE}:latest -f frontend/Dockerfile frontend"
+                sh "docker build -t ${BACKEND_IMAGE}:latest -f backend/Dockerfile backend"
             }
         }
 
@@ -76,8 +75,8 @@ pipeline {
     post {
         always {
             echo "Cleaning up workspace and Docker dangling images..."
+            cleanWs()
             sh 'docker system prune -f || true'
-            deleteDir()
         }
         success {
             echo "✅ Build and push successful!"
@@ -87,10 +86,3 @@ pipeline {
         }
     }
 }
-
-
-
-
-
-
-
