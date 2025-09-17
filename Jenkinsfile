@@ -6,6 +6,12 @@ pipeline {
         FRONTEND_IMAGE  = "rusheeth/devops-frontend"
         BACKEND_IMAGE   = "rusheeth/devops-backend"
     }
+    stages {
+        stages('clean Workspace'){
+            steps{
+                cleanWs()
+            }
+        }
 
     stages {
         stage('Checkout Code') {
@@ -72,7 +78,6 @@ pipeline {
         always {
             echo "Cleaning up workspace and Docker dangling images..."
             sh 'docker system prune -f || true'
-            sh 'chmod -R +w ${WORKSPACE} || true'
             deleteDir()
         }
         success {
@@ -83,6 +88,7 @@ pipeline {
         }
     }
 }
+
 
 
 
