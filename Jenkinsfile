@@ -22,7 +22,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar-server') {   // 🔹 "MySonarQube" = Jenkins SonarQube server config name
+                withSonarQubeEnv('sonar-server') {   // 🔹 "sonar-server" = Jenkins SonarQube server config name
                     sh '''
                         # Backend analysis
                         sonar-scanner \
@@ -38,6 +38,14 @@ pipeline {
                           -Dsonar.host.url=$SONAR_HOST_URL \
                           -Dsonar.login=$SONAR_AUTH_TOKEN || true
                     '''
+                }
+            }
+        }
+
+        stage('SonarQube Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
