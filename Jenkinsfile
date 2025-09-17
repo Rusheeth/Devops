@@ -20,6 +20,28 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar-server') {   // 🔹 "MySonarQube" = Jenkins SonarQube server config name
+                    sh '''
+                        # Backend analysis
+                        sonar-scanner \
+                          -Dsonar.projectKey=backend \
+                          -Dsonar.sources=backend \
+                          -Dsonar.host.url=$SONAR_HOST_URL \
+                          -Dsonar.login=$SONAR_AUTH_TOKEN || true
+
+                        # Frontend analysis
+                        sonar-scanner \
+                          -Dsonar.projectKey=frontend \
+                          -Dsonar.sources=frontend \
+                          -Dsonar.host.url=$SONAR_HOST_URL \
+                          -Dsonar.login=$SONAR_AUTH_TOKEN || true
+                    '''
+                }
+            }
+        }
+
         stage('Backend Setup & Tests') {
             steps {
                 dir('backend') {
