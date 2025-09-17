@@ -22,7 +22,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('MySonarQube') {   // 🔹 "MySonarQube" = Jenkins SonarQube server config name
+                withSonarQubeEnv('sonar-server') {   // 🔹 "MySonarQube" = Jenkins SonarQube server config name
                     sh '''
                         # Backend analysis
                         sonar-scanner \
@@ -107,3 +107,4 @@ pipeline {
         }
     }
 }
+
