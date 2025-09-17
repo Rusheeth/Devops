@@ -7,9 +7,9 @@ pipeline {
         BACKEND_IMAGE   = "rusheeth/devops-backend"
     }
     stages {
-        stages('clean Workspace'){
-            steps{
-                cleanWs()
+       stage('Clean Workspace') {
+            steps {
+                cleanWs()   // Jenkins Workspace Cleanup plugin
             }
         }
 
@@ -87,6 +87,7 @@ pipeline {
         }
     }
 }
+
 
 
 
