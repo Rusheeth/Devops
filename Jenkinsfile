@@ -4,7 +4,9 @@ pipeline {
     environment {
         // Use an AWS ECR registry for a production pipeline
         DOCKER_REGISTRY = "123456789012.dkr.ecr.us-east-1.amazonaws.com"
-        FRONTEND_IMAGE = "my-app-frontend"
+    
+        FRONTEND_IMAGE  = "my-app-frontend"
+
         BACKEND_IMAGE = "my-app-backend"
         // Use a unique tag for each build
         IMAGE_TAG = "${env.GIT_COMMIT}"
@@ -109,4 +111,5 @@ pipeline {
         }
     }
 }
+
 
