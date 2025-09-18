@@ -1,36 +1,160 @@
+# deployment.yaml
+
+# ===== 1. DATABASE SETUP (PostgreSQL) =====
+
+# Secret for PostgreSQL Credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+type: Opaque
+data:
+  # Values are base64 encoded. E.g., 'echo -n "your_password" | base64'
+  POSTGRES_PASSWORD: cG9zdGdyZXNfcGFzc3dvcmQ= # postgres_password
+  POSTGRES_USER: cG9zdGdyZXM= # postgres
+  POSTGRES_DB: mydatabase # Not encoded, plain text is fine
+
+---
+# Persistent Volume Claim to store database data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce # This PV can be mounted by a single node
+  resources:
+    requests:
+      storage: 1Gi # Request 1 Gigabyte of storage
+
+---
+# Database Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-app-deployment
+  name: db-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: my-app
+      app: postgres
   template:
     metadata:
       labels:
-        app: my-app
+        app: postgres
     spec:
       containers:
-      - name: frontend
-        image: rusheeth/devops-frontend
+      - name: postgres
+        image: postgres:14-alpine
         ports:
-        - containerPort: 80
-      - name: backend
-        image: rusheeth/devops-backend
-        ports:
-        - containerPort: 5000
+        - containerPort: 5432
+        envFrom:
+        - secretRef:
+            name: db-secret
+        volumeMounts:
+        - name: db-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: db-storage
+        persistentVolumeClaim:
+          claimName: db-pvc
+
 ---
+# Database Service (Internal communication only)
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-app-service
+  name: db-service
 spec:
+  type: ClusterIP # Only accessible within the Kubernetes cluster
   selector:
-    app: my-app
+    app: postgres
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: LoadBalancer
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
+
+# ===== 2. BACKEND SETUP =====
+
+---
+# Backend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend-container
+        image: rusheeth/devops-backend:latest # 🔹 From your Jenkinsfile
+        ports:
+        - containerPort: 5000 # 🔹 Adjust if your backend uses a different port
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://postgres:postgres_password@db-service:5432/mydatabase"
+        # Add other backend environment variables here
+
+---
+# Backend Service (Internal communication only)
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  type: ClusterIP # Only accessible within the cluster (by the frontend)
+  selector:
+    app: backend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000 # 🔹 Port exposed by the backend container
+
+# ===== 3. FRONTEND SETUP =====
+
+---
+# Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend-container
+        image: rusheeth/devops-frontend:latest # 🔹 From your Jenkinsfile
+        ports:
+        - containerPort: 3000 # 🔹 Adjust if your frontend uses a different port
+        env:
+        - name: REACT_APP_API_URL # Example for a React app
+          value: "http://backend-service" # Connects to the backend service
+
+---
+# Frontend Service (Exposed to the Internet)
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  type: LoadBalancer # 🚀 Exposes the service externally using a cloud load balancer
+  selector:
+    app: frontend
+  ports:
+  - protocol: TCP
+    port: 80 # The port the load balancer will listen on
+    targetPort: 3000 # 🔹 Port exposed by the frontend container
