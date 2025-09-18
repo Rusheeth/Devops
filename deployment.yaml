@@ -14,11 +14,11 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: docker.io/frontend:latest
+        image: rusheeth/devops-frontend
         ports:
         - containerPort: 80
       - name: backend
-        image: docker.io/backend:latest
+        image: rusheeth/devops-backend
         ports:
         - containerPort: 5000
 ---
