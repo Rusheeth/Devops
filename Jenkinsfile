@@ -24,7 +24,7 @@ pipeline {
             steps {
                 withSonarQubeEnv('sonar-server') {
                     script {
-                        def scannerHome = tool 'sonar-scanner'
+                        def scannerHome = tool 'sonar-scanner'  // 🔹 Global Tool name in Jenkins
                         sh """
                             ${scannerHome}/bin/sonar-scanner \
                               -Dsonar.projectKey=backend \
@@ -32,6 +32,7 @@ pipeline {
                               -Dsonar.host.url=$SONAR_HOST_URL \
                               -Dsonar.login=$SONAR_AUTH_TOKEN
                         """
+
                         sh """
                             ${scannerHome}/bin/sonar-scanner \
                               -Dsonar.projectKey=frontend \
@@ -98,16 +99,6 @@ pipeline {
                         docker push $FRONTEND_IMAGE:latest
                         docker push $BACKEND_IMAGE:latest
                     '''
-                }
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    // 🔹 Prerequisite: Ensure Jenkins has credentials to access your Kubernetes cluster.
-                    echo "🚀 Deploying application to the cluster..."
-                    sh 'kubectl apply -f deployment.yaml'
                 }
             }
         }
