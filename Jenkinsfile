@@ -1,15 +1,17 @@
 pipeline {
     agent any
-    
-    environment {
-        // Use an AWS ECR registry for a production pipeline
-        DOCKER_REGISTRY = "559050243300.dkr.ecr.us-east-1.amazonaws.com"
-    
-        FRONTEND_IMAGE  = "my-app-frontend"
-        BACKEND_IMAGE  = "my-app-backend"
 
-        // Use a unique tag for each build
-        IMAGE_TAG = "${env.GIT_COMMIT}"
+    environment {
+        // --- AWS + ECR Configuration ---
+        AWS_REGION       = "us-east-1"
+        AWS_ACCOUNT_ID   = "559050243300"
+        DOCKER_REGISTRY  = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+        FRONTEND_IMAGE   = "my-app-frontend"
+        BACKEND_IMAGE    = "my-app-backend"
+
+        // Use short commit hash for tagging
+        IMAGE_TAG = "${GIT_COMMIT[0..7]}"
     }
 
     stages {
@@ -18,7 +20,7 @@ pipeline {
                 cleanWs()
             }
         }
-        
+
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/Rusheeth/Devops.git'
@@ -65,33 +67,36 @@ pipeline {
 
         stage('Push Docker Images to ECR') {
             steps {
-                // Login to ECR using the EC2 instance's IAM role
-                sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${DOCKER_REGISTRY}"
-                
-                // Tag images for ECR
+                // Authenticate to ECR
+                sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${DOCKER_REGISTRY}"
+
+                // Tag & Push images
                 sh "docker tag ${FRONTEND_IMAGE}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:${IMAGE_TAG}"
                 sh "docker tag ${BACKEND_IMAGE}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${BACKEND_IMAGE}:${IMAGE_TAG}"
-                
-                // Push images
+
                 sh "docker push ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:${IMAGE_TAG}"
                 sh "docker push ${DOCKER_REGISTRY}/${BACKEND_IMAGE}:${IMAGE_TAG}"
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy to EKS') {
             steps {
                 script {
                     echo "🚀 Deploying application to the cluster..."
-                    
-                    // Update kubeconfig using the EC2 instance IAM role
-                    sh 'aws eks update-kubeconfig --region us-east-1 --name my-eks-cluster'
-                    
-                    // Substitute the image tags in the YAML file before deploying
+
+                    // Update kubeconfig
+                    sh "aws eks update-kubeconfig --region ${AWS_REGION} --name my-eks-cluster"
+
+                    // Replace image references in manifest
                     sh "sed -i 's|rusheeth/devops-frontend:latest|${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:${IMAGE_TAG}|g' deployment.yaml"
                     sh "sed -i 's|rusheeth/devops-backend:latest|${DOCKER_REGISTRY}/${BACKEND_IMAGE}:${IMAGE_TAG}|g' deployment.yaml"
-                    
-                    // Apply the updated manifest
-                    sh 'kubectl apply -f deployment.yaml'
+
+                    // Apply to cluster
+                    sh "kubectl apply -f deployment.yaml"
+
+                    // (Optional) force update deployments with new images
+                    sh "kubectl set image deployment/frontend-deployment frontend=${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:${IMAGE_TAG} || true"
+                    sh "kubectl set image deployment/backend-deployment backend=${DOCKER_REGISTRY}/${BACKEND_IMAGE}:${IMAGE_TAG} || true"
                 }
             }
         }
@@ -99,19 +104,15 @@ pipeline {
 
     post {
         always {
-            echo "Cleaning up workspace and Docker dangling images..."
+            echo "🧹 Cleaning up workspace and Docker dangling images..."
             cleanWs()
             sh 'docker system prune -f || true'
         }
         success {
-            echo "✅ Build and push successful!"
+            echo "✅ Pipeline finished successfully!"
         }
         failure {
-            echo "❌ Build failed! Check logs."
+            echo "❌ Pipeline failed! Check logs."
         }
     }
 }
-
-
-
-
